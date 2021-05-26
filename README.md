@@ -6,3 +6,6 @@ pydotNetCLI.py is tool to parse dotNet PE CLI header (currently just partially p
 
 ## Output
 ![use_case_1.png](./screenshots/use_case_1.png)
+
+## Refenrences
+https://www.codeproject.com/Articles/12585/The-NET-File-Format
