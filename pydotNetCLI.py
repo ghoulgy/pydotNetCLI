@@ -142,13 +142,10 @@ class dotNet_Header:
         }
 
         self.ptr_cli_end_tables_header = self.ptr_cli_tables_header + 16 + 8
-        print()
-        table_dword_count = 0
         self.dict_table_get_count = {}
 
         for table_name, table_count in dict_mask_table.items():
             if self.cli_MaskValid & table_count == table_count:
-                table_dword_count += 1
                 self.dict_table_get_count[table_name] = int.from_bytes(pe_content[self.ptr_cli_end_tables_header : self.ptr_cli_end_tables_header + 4], sys.byteorder)
                 self.ptr_cli_end_tables_header += 4
 
