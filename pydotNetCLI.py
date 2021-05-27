@@ -9,6 +9,7 @@ class dotNet_Header:
 
         self.set_dotNet_directory(p_rebased_offset)
         self.set_meta_header(p_cli_metadata_header)
+        self.print_meta_header()
         self.set_ptr_cli_end_of_metaheader(p_cli_metadata_header)
         self.set_ptr_tables_header(p_cli_metadata_header)
         self.set_stream_table_count()
@@ -28,7 +29,7 @@ class dotNet_Header:
         self.set_tide_stream_table()
         self.set_string_stream_table()
         self.set_dict_mani_rsrc_size_offset_table()
-        self.set_ptr_resource_offset(p_diff_va_rva, p_rebased_offset)
+        self.set_ptr_resource_offset(p_diff_va_rva, p_rebased_offset) # Offset of first CLI resource
 
         print("##### Extract Resource in CLI resource #####")
         self.set_ptr_resource_data_offset(self.cli_resource_va)
@@ -36,15 +37,49 @@ class dotNet_Header:
 
 
     def set_dotNet_directory(self, p_rebased_offset):
-        self.ResourceSize = int.from_bytes(self.pe_content[p_rebased_offset + 28 : p_rebased_offset + 32], sys.byteorder)
+        self.cb = int.from_bytes(self.pe_content[p_rebased_offset : p_rebased_offset + 4], sys.byteorder)
+        self.MajorRuntimeVersion = int.from_bytes(self.pe_content[p_rebased_offset + 4 : p_rebased_offset + 6], sys.byteorder)
+        self.MinorRuntimeVersion = int.from_bytes(self.pe_content[p_rebased_offset+ 6 : p_rebased_offset + 8], sys.byteorder)
+        self.MetaData_RVA = int.from_bytes(self.pe_content[p_rebased_offset + 8 : p_rebased_offset + 12], sys.byteorder)
+        self.MetaDataSize = int.from_bytes(self.pe_content[p_rebased_offset + 12 : p_rebased_offset + 16], sys.byteorder)
+        self.Flags = int.from_bytes(self.pe_content[p_rebased_offset + 16 : p_rebased_offset + 20], sys.byteorder)
+        self.EntryPointToken = int.from_bytes(self.pe_content[p_rebased_offset + 20 : p_rebased_offset + 24], sys.byteorder)
+        self.Resources_RVA = int.from_bytes(self.pe_content[p_rebased_offset + 24 : p_rebased_offset + 28], sys.byteorder)
+        self.ResourcesSize = int.from_bytes(self.pe_content[p_rebased_offset + 28 : p_rebased_offset + 32], sys.byteorder)
+        self.StrongNameSignature_RVA = int.from_bytes(self.pe_content[p_rebased_offset + 32 : p_rebased_offset + 36], sys.byteorder)
+        self.StringNameSignature_Size = int.from_bytes(self.pe_content[p_rebased_offset + 36 : p_rebased_offset + 40], sys.byteorder)
+        self.CodeManagerTable_RVA = int.from_bytes(self.pe_content[p_rebased_offset + 40 : p_rebased_offset + 44], sys.byteorder)
+        self.CodeManagerTable_Size = int.from_bytes(self.pe_content[p_rebased_offset + 44 : p_rebased_offset + 48], sys.byteorder)
+        self.VTableFixups_RVA = int.from_bytes(self.pe_content[p_rebased_offset + 48 : p_rebased_offset + 52], sys.byteorder)
+        self.VTableFixups_Size = int.from_bytes(self.pe_content[p_rebased_offset + 52 : p_rebased_offset + 56], sys.byteorder)
+        self.ExportAddressTableJumps_RVA = int.from_bytes(self.pe_content[p_rebased_offset + 56 : p_rebased_offset + 60], sys.byteorder)
+        self.ExportAddressTableJumps_Size = int.from_bytes(self.pe_content[p_rebased_offset + 60 : p_rebased_offset + 64], sys.byteorder)
+        self.ManagedNativeHeader_RVA = int.from_bytes(self.pe_content[p_rebased_offset + 68 : p_rebased_offset + 72], sys.byteorder)
+        self.ManagedNativeHeader_Size = int.from_bytes(self.pe_content[p_rebased_offset + 72 : p_rebased_offset + 76], sys.byteorder)
 
 
     def set_meta_header(self, p_ptr_cli_metadata_header):
+        self.cli_meta_header_Signature = int.from_bytes(self.pe_content[p_ptr_cli_metadata_header : p_ptr_cli_metadata_header + 4], sys.byteorder)
+        self.cli_meta_header_MajorVersion = int.from_bytes(self.pe_content[p_ptr_cli_metadata_header + 4 : p_ptr_cli_metadata_header + 6], sys.byteorder)
+        self.cli_meta_header_MinorVersion = int.from_bytes(self.pe_content[p_ptr_cli_metadata_header + 6 : p_ptr_cli_metadata_header + 8], sys.byteorder)
         self.cli_meta_header_VersionLength = int.from_bytes(self.pe_content[p_ptr_cli_metadata_header + 12 : p_ptr_cli_metadata_header + 16], sys.byteorder)
-        # self.cli_meta_header_VersionName = self.pe_content[p_ptr_cli_metadata_header + 16 : p_ptr_cli_metadata_header + self.cli_meta_header_VersionLength + 16]
-        self.cli_meta_header_NumberOfStreams = int.from_bytes(self.pe_content[p_ptr_cli_metadata_header + self.cli_meta_header_VersionLength + 18 : p_ptr_cli_metadata_header + self.cli_meta_header_VersionLength + 20], sys.byteorder)
-        self.cli_meta_header_Size = int.from_bytes(self.pe_content[p_ptr_cli_metadata_header + self.cli_meta_header_VersionLength + 20 : p_ptr_cli_metadata_header + self.cli_meta_header_VersionLength + 22], sys.byteorder)
-        print(hex(self.cli_meta_header_Size))
+        self.cli_meta_header_VersionName = self.pe_content[p_ptr_cli_metadata_header + 14 : p_ptr_cli_metadata_header + self.cli_meta_header_VersionLength + 16].decode()
+        ptr_after_VersionName = p_ptr_cli_metadata_header + self.cli_meta_header_VersionLength
+        self.cli_meta_header_Flags = int.from_bytes(self.pe_content[ptr_after_VersionName + 16 : ptr_after_VersionName + 18], sys.byteorder)
+        self.cli_meta_header_NumberOfStreams = int.from_bytes(self.pe_content[ptr_after_VersionName + 18 : ptr_after_VersionName + 20], sys.byteorder)
+        self.cli_meta_header_Size = int.from_bytes(self.pe_content[ptr_after_VersionName + 20 : ptr_after_VersionName + 22], sys.byteorder)
+
+
+    def print_meta_header(self):
+        print("##### MetaData Header Information #####")
+        print(f"[+] Signature: {hex(self.cli_meta_header_Signature)}")
+        print(f"[+] Major Version: {self.cli_meta_header_MajorVersion}")
+        print(f"[+] Minor Version: {self.cli_meta_header_MinorVersion}")
+        print(f"[+] Version Length: {self.cli_meta_header_VersionLength}")
+        print(f"[+] Version Name: {self.cli_meta_header_VersionName}")
+        print(f"[+] Flags: {hex(self.cli_meta_header_Flags)}")
+        print(f"[+] Number of Streams: {self.cli_meta_header_NumberOfStreams}")
+        print(f"[+] Header Size: {hex(self.cli_meta_header_Size)}\n")
 
 
     def set_ptr_cli_end_of_metaheader(self, p_ptr_cli_metadata_header):
@@ -162,13 +197,13 @@ class dotNet_Header:
             "Method": 14,
         #    "ParamPtr": ?,
             "Param": 6,
-        #    "InterfaceImpl": ?,
+            "InterfaceImpl": 4,
             "MemberRef": 6,
             "Constant": 6,
             "CustomAttribute": 6,
             "FieldMarshal": 4,
             "DeclSecurity": 6,
-        #    "ClassLayout": ?,
+            "ClassLayout": 8,
         #    "FieldLayout": ?,
             "StandAloneSig": 2,
             "EventMap": 4,
@@ -178,11 +213,11 @@ class dotNet_Header:
         #    "PropertyPtr": ?,
             "Property": 6,
             "MethodSemantics": 6,
-        #    "MethodImpl": ?,
+            "MethodImpl": 6,
             "ModuleRef": 2,
             "TypeSpec": 2,
             "ImplMap": 8,
-        #    "FieldRVA": ?,
+            "FieldRVA": 6,
             "ENCLog": 8,
             "ENCMap": 4,
             "Assembly": 22,
@@ -343,7 +378,7 @@ class dotNet_Header:
                 sum_of_size += (rsrc_offset - tmp_rsrc_offset)
                 tmp_rsrc_offset = rsrc_offset
 
-        arr_mani_rsrc_size.append((self.cli_resource_va - 4 + self.ResourceSize) - (sum_of_size + self.cli_resource_va)) # Last mani rsrc size
+        arr_mani_rsrc_size.append((self.cli_resource_va - 4 + self.ResourcesSize) - (sum_of_size + self.cli_resource_va)) # Last mani rsrc size
 
         rsrc_idx = 0
         for rsrc_name, rsrc_offset in self.dict_mani_rsrc_size_offset_table.items():
@@ -352,7 +387,7 @@ class dotNet_Header:
 
         accumulate_rsrc_size = 0
         for rsrc_name, list_rsrc_info in self.dict_mani_rsrc_size_offset_table.items():
-            if accumulate_rsrc_size >= self.ResourceSize - 4:
+            if accumulate_rsrc_size >= self.ResourcesSize - 4:
                 break
             v_ptr_cli_DataSection = self.set_ptr_resource_data_offset(list_rsrc_info[0])
             accumulate_rsrc_size += list_rsrc_info[1]
@@ -367,6 +402,7 @@ class dotNet_Header:
                     rsrc_content = self.pe_content[array_ptr_cur : array_ptr_cur + self.rsrc_content_size]
                 else:
                     print("[!] Random file detected. Kindly check it")
+                    rsrc_content = self.pe_content[array_ptr_cur : array_ptr_cur + self.rsrc_content_size]
             elif int.from_bytes(self.pe_content[v_ptr_cli_DataSection : v_ptr_cli_DataSection + 2], sys.byteorder) == 0x5a4d:
                 print("[!] MZ file detected")
                 rsrc_content = self.pe_content[v_ptr_cli_DataSection : v_ptr_cli_DataSection + self.rsrc_content_size]
@@ -381,7 +417,7 @@ class dotNet_Header:
             print(f"[+] Resource content size: {hex(self.rsrc_content_size)}")
             print(f"[+] Number of sub resources: {self.cli_NumberOfResources}")
             print(f"[+] Number of resources type: {self.cli_NumberOfTypes}")
-            print(f"[+] {accumulate_rsrc_size} of total {self.ResourceSize - 4} resource size")
+            print(f"[+] {accumulate_rsrc_size} of total {self.ResourcesSize - 4} resource size")
 
             try:
                 with open(f"{rsrc_name}.bin", 'wb') as fwrite:
