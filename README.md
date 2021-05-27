@@ -5,6 +5,7 @@ pydotNetCLI.py is tool to parse dotNet PE CLI header (currently just partially p
 `python3 pydotNetCLI.py "your dotNetFile"`
 
 ## Output
+![meta_header_info.png](./screenshots/meta_header_info.png)
 ![use_case_1.png](./screenshots/use_case_1.png)
 
 ## Refenrences
