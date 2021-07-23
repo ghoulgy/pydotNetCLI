@@ -16,7 +16,7 @@ class dotNet_Header:
 
         print("##### Stream Table Information #####")
         for table_name, table_size in self.dict_stream_table.items():
-            print(f"[+] Stream table name: {table_name}, Stream table size: {table_size}")    
+            print(f"[+] Stream table name: {table_name}, Stream table size: {hex(table_size)}")    
         print()
 
         self.set_MaskValid()
@@ -311,6 +311,8 @@ class dotNet_Header:
 
     def set_ptr_resource_data_offset(self, p_rsrc_offset):
         self.rsrc_content_size = int.from_bytes(self.pe_content[p_rsrc_offset - 4 : p_rsrc_offset], sys.byteorder)
+        self.cli_NumberOfResources = 0
+        self.cli_NumberOfTypes = 0
 
         if int.from_bytes(self.pe_content[p_rsrc_offset : p_rsrc_offset + 4], sys.byteorder) == self.RESOURCE_MAGIC_NUMBER:
             '''
@@ -332,8 +334,10 @@ class dotNet_Header:
             for i in range(self.cli_NumberOfTypes):
                 if self.pe_content[ptr_cur] <= 255:
                     val_size = 1
+
                 else:
                     val_size = 0
+
                 ptr_cur += self.pe_content[ptr_cur]
                 ptr_cur += val_size
 
@@ -370,11 +374,11 @@ class dotNet_Header:
 
         sum_of_size = 0
         arr_mani_rsrc_size = []
+        tmp_rsrc_offset = 0
         for rsrc_name, rsrc_offset in self.dict_mani_rsrc_size_offset_table.items():
             if rsrc_offset == 0:
                 tmp_rsrc_offset = rsrc_offset
                 tmp_ptr_cli_DataSection = self.cli_resource_va
-                continue
 
             else:
                 arr_mani_rsrc_size.append(rsrc_offset - tmp_rsrc_offset)
@@ -392,6 +396,7 @@ class dotNet_Header:
         for rsrc_name, list_rsrc_info in self.dict_mani_rsrc_size_offset_table.items():
             if accumulate_rsrc_size >= self.ResourcesSize - 4:
                 break
+
             v_ptr_cli_DataSection = self.set_ptr_resource_data_offset(list_rsrc_info[0])
             accumulate_rsrc_size += list_rsrc_info[1]
 
@@ -403,9 +408,11 @@ class dotNet_Header:
                 if int.from_bytes(self.pe_content[array_ptr_cur : array_ptr_cur + 2], sys.byteorder) == 0x8b1f: # Gzip header
                     print("[!] GZip file detected")
                     rsrc_content = self.pe_content[array_ptr_cur : array_ptr_cur + self.rsrc_content_size]
+                
                 else:
                     print("[!] Random file detected. Kindly check it")
                     rsrc_content = self.pe_content[array_ptr_cur : array_ptr_cur + self.rsrc_content_size]
+            
             elif int.from_bytes(self.pe_content[v_ptr_cli_DataSection : v_ptr_cli_DataSection + 2], sys.byteorder) == 0x5a4d:
                 print("[!] MZ file detected")
                 rsrc_content = self.pe_content[v_ptr_cli_DataSection : v_ptr_cli_DataSection + self.rsrc_content_size]
