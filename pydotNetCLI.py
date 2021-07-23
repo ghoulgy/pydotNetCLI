@@ -279,8 +279,7 @@ class dotNet_Header:
                 self.ptr_cli_end_tables_header += dict_dword_table_size[mani_table_name] * mani_table_count
             except:
                 print(f"[-] Please fill up the mani_table_name ({mani_table_name}), count ({mani_table_count}) in dict_dword_table_size (Line 186). Use CFF Explorer to check to actual section size")
-                print("Exit ...")
-                exit(0)
+                self.exit_wrapper()
 
         self.ptr_to_string_stream_table = self.ptr_cli_tables_header + self.dict_stream_table["#~"] # Move to strings stream table
 
@@ -365,6 +364,10 @@ class dotNet_Header:
 
 
     def get_resource_data(self):
+        if self.cli_resource_va == 0 or self.ResourcesSize == 0:
+            print("[-] Probably packed or no rsrc found!")
+            self.exit_wrapper()
+
         sum_of_size = 0
         arr_mani_rsrc_size = []
         for rsrc_name, rsrc_offset in self.dict_mani_rsrc_size_offset_table.items():
@@ -429,6 +432,10 @@ class dotNet_Header:
                 print(f"[-] {rsrc_name}.bin extract failed ...")
 
             input("##### Next Resource File #####")
+
+    def exit_wrapper(self):
+        print("[-] Exit...")
+        exit(0)
 
 
 ### START ###
